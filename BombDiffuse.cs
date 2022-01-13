@@ -16,7 +16,9 @@ public class BombDiffuse : MonoBehaviour
             GameManager.Instance.bombDiffuseBar.SetActive(true);
             isDiffuse = true;
             StartCoroutine(BombDiffuseTime());
+            
         }
+        
 
        
         
@@ -31,9 +33,26 @@ public class BombDiffuse : MonoBehaviour
             GameManager.Instance.bombSliderValue.text = "{0}%";
             GameManager.Instance.bombDiffuseBar.SetActive(false);
             GameManager.Instance.bombSlider.value = currentValue;
+          
         }
     }
-    
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            if (PlayerPrefs.GetInt("sfxvolume") == 0)
+            {
+                gameObject.GetComponent<AudioSource>().enabled = false;
+            }
+            else if (PlayerPrefs.GetInt("sfxvolume") == 1)
+            {
+                gameObject.GetComponent<AudioSource>().enabled = true;
+            }
+        }
+    }
+
+
     private IEnumerator BombDiffuseTime()
     {
         if (currentValue >= 100)
@@ -47,6 +66,9 @@ public class BombDiffuse : MonoBehaviour
             gameObject.transform.GetChild(0).gameObject.SetActive(false);
             yield return new WaitForSecondsRealtime(1f);
             GameManager.Instance.bombDiffuseBar.SetActive(false);
+            this.gameObject.GetComponent<MapMarker>().isActive = false;
+            
+           
         }
         
         
