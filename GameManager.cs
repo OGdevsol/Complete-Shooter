@@ -33,6 +33,7 @@ public class GameManager : MonoBehaviour
     [Space(3)]
     public GameObject victoryEffect;
     public GameObject defeatEffect;
+    public Text[] rankUpdTexts;
     [HideInInspector] public int currentLevel = 0;
     private int levelCount;
     private int selectedLevel;
@@ -42,17 +43,21 @@ public class GameManager : MonoBehaviour
     public Text totalKill;
     public Text BombsDefused;
     public Text totalbombs;
+    public Text HeadshotsValue;
 
     
     [Space(5)] [Header("---- Scripts Reference")]
     public playercontroller playerController;
     private static int _levelCountStored;
+    public GameObject AudioController;
 
     [Space(5)] [Header("---- Flag Collect")]
     public GameObject flagscollected;
     public Text flagscollectedtext;
+    public GameObject FlagsGO; //Flags main game object that is going to be activated in flag mode to show total flags collected texts.
     [HideInInspector]
     public int flagcollectcounter = 0;
+    
 
     [Space(5)] [Header("---- Bomb Diffuse")]
     public Text bombSliderValue;
@@ -62,7 +67,28 @@ public class GameManager : MonoBehaviour
     public GameObject bombDiffuseStatus;
     public GameObject flagModeStatus;
 
-    public Text[] rankUpdTexts;
+   
+    
+    [Space(5)] [Header("---- Effects/Stats")]
+    public GameObject HeadshotEffect;
+    public GameObject blood;
+    public GameObject Explosion;
+    public Text TotalKills;
+    public Text AccuracyValue;
+    public Text FlagsCollectedVal;
+    public GameObject FlagsCollectedtoDisableInbombDefuse;
+    public string NA = "N/A";
+    public GameObject FlagsCollectedMainText;
+    public GameObject BombsDefusedGO;
+    public Text TotalBombsDefusedVal;
+    public GameObject Controls;
+    public GameObject marker;
+    public bool GameCompleteBool;
+    
+
+
+
+
 
     #endregion
 
@@ -72,6 +98,7 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        AudioController.SetActive(true);
 
         Time.timeScale = 1;
 
@@ -89,22 +116,15 @@ public class GameManager : MonoBehaviour
             flagscollected.gameObject.SetActive(false);
             //flagModeStatus.SetActive(false);
         }
-        else if (PlayerPrefs.GetString("Mode")=="DiscShooting")
-        {
-            currentLevel = PlayerPrefs.GetInt("DiscShootingLevel");
-            playerController.transform.position = DSM.instance.playerPositions[PlayerPrefs.GetInt("DiscShootingLevel")-1].position;
-            playerController.transform.rotation = DSM.instance.playerPositions[PlayerPrefs.GetInt("DiscShootingLevel")-1].rotation;
-           
-
-        }
-       
-
-        if (PlayerPrefs.GetString("Mode")=="Flag" || PlayerPrefs.GetString("Mode")=="BombDiffuse")
-        {
-            Debug.Log("Current Level "+currentLevel);
         
-            playerController.transform.position = LevelsController.Instance.levelData[currentLevel - 1].playerSpwanPosition.position;
-            playerrotate.Instance.rotationX = LevelsController.Instance.levelData[currentLevel - 1].playerSpwanPosition.eulerAngles.y;
+        print("Current Level "+currentLevel);
+
+        if (currentLevel<=30)
+        {
+            playerController.transform.position =
+                LevelsController.Instance.levelData[currentLevel - 1].playerSpwanPosition.position;
+            playerrotate.Instance.rotationX = LevelsController.Instance.levelData[currentLevel - 1]
+                .playerSpwanPosition.eulerAngles.y;
             weaponselector.Instance.grenade = 100;
 
             totalKill.text = LevelsController.Instance.levelData[currentLevel - 1].enemiesType.Count.ToString();
@@ -112,31 +132,66 @@ public class GameManager : MonoBehaviour
         
             EnableReference(0);
             levelNumber.text = currentLevel.ToString();
+            PlayerPrefs.SetInt("TotalFlags", PlayerPrefs.GetInt("TotalFlags"));
         }
-        
-        
-#if !UNITY_EDITOR
-        if (PlayerPrefs.GetString("Mode") == "Flag")
+        else
         {
-            Analyticsmanager.instance.LevelStartEvent("FML",currentLevel);
+            currentLevel = 30;
+            playerController.transform.position =
+                LevelsController.Instance.levelData[currentLevel - 1].playerSpwanPosition.position;
+            playerrotate.Instance.rotationX = LevelsController.Instance.levelData[currentLevel - 1]
+                .playerSpwanPosition.eulerAngles.y;
+            weaponselector.Instance.grenade = 100;
+
+            totalKill.text = LevelsController.Instance.levelData[currentLevel - 1].enemiesType.Count.ToString();
+            totalbombs.text = LevelsController.Instance.levelData[currentLevel - 1].bombposition.Count.ToString();
+        
+            EnableReference(0);
+            levelNumber.text = currentLevel.ToString();
+            PlayerPrefs.SetInt("TotalFlags", PlayerPrefs.GetInt("TotalFlags"));
+            ;
         }
-        else if (PlayerPrefs.GetString("Mode") == "BombDiffuse")
+       
+      
+        
+
+        
+// #if !UNITY_EDITOR
+
+
+        if(Analyticsmanager.instance)
         {
-            Analyticsmanager.instance.LevelStartEvent("BML",currentLevel);
+            if (PlayerPrefs.GetString("Mode") == "Flag")
+            {
+                Analyticsmanager.instance.LevelStartEvent("FML", currentLevel);
+            }
+            else if (PlayerPrefs.GetString("Mode") == "BombDiffuse")
+            {
+                Analyticsmanager.instance.LevelStartEvent("BML", currentLevel);
+            }
         }
 
+
+        if (!AdsController.Instance) return;
+        
         AdsController.Instance.gameplay = true;
         AdsController.Instance.HideBanner();
         AdsController.Instance.HideLargeBanner();
-#endif
+        // #endif
         
 }
 
     private void EnableReference(int index)
     {
-        foreach (var item in reference)
+        /*foreach (var item in reference)
         {
             item.SetActive(false);
+        }
+        reference[index].SetActive(true);*/
+
+        for (int i = 0; i < reference.Length; i++)
+        {
+            reference[i].SetActive(false);
         }
         reference[index].SetActive(true);
         
@@ -148,13 +203,15 @@ public class GameManager : MonoBehaviour
 
     public void Restart()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        //SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        SceneManager.LoadScene("03 GamePlay");
     }
 
     public void Pause()
     {
         EnableReference(1);
         Time.timeScale = 0;
+        LevelsController.Instance.LastEnemyRemaining.SetActive(false);
 #if !UNITY_EDITOR
             AdsController.Instance.Unity_InterstitialGame();
 #endif
@@ -164,6 +221,10 @@ public class GameManager : MonoBehaviour
     {
         Time.timeScale = 1;
         EnableReference(0);
+        if (LevelsController.Instance.lastEnemy)
+        {
+            LevelsController.Instance.LastEnemyRemaining.SetActive(true);
+        }
     }
     
     public void Home()
@@ -186,7 +247,7 @@ public class GameManager : MonoBehaviour
         }
         else if (PlayerPrefs.GetString("Mode") == "BombDiffuse")
         {
-            if (PlayerPrefs.GetInt("BombLevel") == 30)
+            if (PlayerPrefs.GetInt("BombLevel") >= 30)
             {
                 PlayerPrefs.SetInt("BombLevel",1); 
             }
@@ -195,14 +256,11 @@ public class GameManager : MonoBehaviour
                 PlayerPrefs.SetInt("BombLevel",currentLevel+1);
             }
         }
-        else if (PlayerPrefs.GetString("Mode") == "DiscShooting")
-        {
-           
-            PlayerPrefs.SetInt("DiscShootingLevel",currentLevel+1);
-            
-        }
         StartCoroutine(LoadAsynchronously(2));
     }
+
+   
+    
 
     public void Reset()
     {
@@ -218,15 +276,8 @@ public class GameManager : MonoBehaviour
     private IEnumerator LoadAsynchronously(int sceneIndex)
     {
         EnableReference(4);
-        yield return new WaitForSecondsRealtime(1.5f);
-        var async = SceneManager.LoadSceneAsync(sceneIndex);
-        while (!async.isDone)
-        {
-            float progress = Mathf.Clamp01(async.progress / .9f);
-            // LoadingBar.fillAmount = progress;
-            // LoadingProgress.text = (progress * 100f).ToString("0") + "%";
-            yield return null;
-        }
+        yield return new WaitForSecondsRealtime(2.5f);
+        SceneManager.LoadScene(sceneIndex);
     }
 
     #endregion
@@ -235,9 +286,14 @@ public class GameManager : MonoBehaviour
     
     private  void FlagStats()
     {
-        if (PlayerPrefs.HasKey("FlagLevelPurchased")) return;
+        if (PlayerPrefs.HasKey("FlagLevelPurchased"))
+        {
+            PlayerPrefs.SetInt("SelectedFlagLevel", 29);
+            return;
+        }//return;
         int curr = PlayerPrefs.GetInt("UnlockFlag");
-        if (currentLevel > curr)
+      
+        if (currentLevel > curr && currentLevel<=30 )
         {
             PlayerPrefs.SetInt("UnlockFlag", (curr + 1));
         }
@@ -246,89 +302,130 @@ public class GameManager : MonoBehaviour
         {
             PlayerPrefs.SetInt("SelectedFlagLevel",selectedLevel);
         }
-        StartCoroutine(VictoryPanel());
-      //  PlayerPrefs.SetInt("Cash",LevelsController.Instance.levelCash[currentLevel]-1);
-       
 
     }
-
-    private void BombDiffuseStats()
+ 
+    
+    private  void BombDiffuseStats()
     {
-        if (PlayerPrefs.HasKey("BombLevelPurchased")) return;
-        
-            int curr = PlayerPrefs.GetInt("UnlockBomb");
-            if (currentLevel>curr)
-            {
-                PlayerPrefs.SetInt("UnlockBomb",curr+1);
-                
-            }
+        if (PlayerPrefs.HasKey("BombLevelPurchased"))
+        {
+            PlayerPrefs.SetInt("SelectedBombLevel",29);
+            return;
+        }//return;
+        int curr = PlayerPrefs.GetInt("UnlockBomb");
+        Debug.Log("int curr ==  "+ curr);
+        Debug.Log("PlayerprefUnlockBomb==  "+ PlayerPrefs.GetInt("UnlockBomb"));
+        Debug.Log("Current Level ===  "+ currentLevel);
+        if (currentLevel > curr && currentLevel<=30)
+            
+        {
+            PlayerPrefs.SetInt("UnlockBomb", (curr + 1));
+        }
+        selectedLevel = PlayerPrefs.GetInt("UnlockBomb");
+        if (currentLevel < 30)
+        {
+            PlayerPrefs.SetInt("SelectedBombLevel",selectedLevel);
+        }
 
-            selectedLevel = PlayerPrefs.GetInt("UnlockBomb");
-            if (currentLevel<30)
-            {
-                PlayerPrefs.SetInt("SelectedBombLevel",selectedLevel);
-            }
-            StartCoroutine(VictoryPanel());
-           
-           
     }
-   
 
-
-
+    ///////////////////////////////// Level Complete
+    
     public void GameComplete()
     {
-        if (PlayerPrefs.GetString("Mode")=="Flag")
+        Controls.SetActive(false);
+        if (PlayerPrefs.GetString("Mode") == "Flag")
         {
             FlagStats();
-            PlayerPrefs.SetInt("Cash",PlayerPrefs.GetInt("Cash")+LevelsController.Instance.levelCash[currentLevel-1]);
-           
-           
+            FlagsCollectedMainText.SetActive(true);
+                
         }
         else if (PlayerPrefs.GetString("Mode") == "BombDiffuse")
         {
             BombDiffuseStats();
-            PlayerPrefs.SetInt("Cash",PlayerPrefs.GetInt("Cash")+LevelsController.Instance.levelCash[currentLevel-1]);
-           
-            
+            FlagsCollectedMainText.SetActive(false);
+
+
         }
-        
+        StartCoroutine(VictoryPanel());
+        PlayerPrefs.SetInt("Cash",PlayerPrefs.GetInt("Cash")+LevelsController.Instance.levelCash[currentLevel-1]);
         
     }
-
     
+    public  IEnumerator VictoryPanel()
+    {
        
+        yield return new WaitForSecondsRealtime(0.25f);
+        AccuracyCheck();
+        victoryEffect.SetActive(true);
+        SoundController.instance.playFromPool(AudioType.LevelComplete);
+        ModeStats();
+        SoundController.instance.audioMusic.enabled = false;
+        yield return new WaitForSeconds(3f);
+        victoryEffect.SetActive(false);
+        SoundController.instance.playFromPool(AudioType.LevelComplete);
+        RankUpSystem();
         
-      
+        
+// #if !UNITY_EDITOR
+
+
+        if(Analyticsmanager.instance)
+        {
+            if (PlayerPrefs.GetString("Mode") == "Flag")
+            {
+                Analyticsmanager.instance.LevelCompleteEvent("FML", currentLevel);
+            }
+            else if (PlayerPrefs.GetString("Mode") == "BombDiffuse")
+            {
+                Analyticsmanager.instance.LevelCompleteEvent("BML", currentLevel);
+            }
+        }
+        
+        if(AdsController.Instance)
+        {
+            AdsController.Instance.Unity_InterstitialGame();
+        }
+// #endif
+    }
+
+    public void AccuracyCheck()
+    {
+        if (PlayerPrefs.GetString("Mode")=="Flag" && PlayerPrefs.GetFloat("AccuracyFlag")>60.0 || PlayerPrefs.GetString("Mode")=="BombDiffuse" && PlayerPrefs.GetFloat("AccuracyBomb")>60.0)
+        {
+            AccuracyValue.color=Color.green;
+            
+        }
+        else if(PlayerPrefs.GetString("Mode")=="Flag" && PlayerPrefs.GetFloat("AccuracyFlag")<30 || PlayerPrefs.GetString("Mode")=="BombDiffuse" && PlayerPrefs.GetFloat("AccuracyBomb")<30)
+        {
+            AccuracyValue.color=Color.red;
+        }  
+    }
+
+    public void ModeStats()
+    {
+        if (PlayerPrefs.GetString("Mode")=="Flag")
+        {
+            PlayerPrefs.SetFloat("AccuracyFlag", PlayerPrefs.GetFloat("EnemyHitFlag") / PlayerPrefs.GetFloat("ShotsFiredFlag")*100);
+            HeadshotsValue.text = PlayerPrefs.GetFloat("HeadshotCountFlag").ToString();
+            TotalKills.text = PlayerPrefs.GetFloat("EnemiesKilledFlag").ToString();
+            AccuracyValue.text = PlayerPrefs.GetFloat("AccuracyFlag").ToString();
+            BombsDefusedGO.SetActive(false); 
+        }
+        else if (PlayerPrefs.GetString("Mode")=="BombDiffuse")
+        {
+            PlayerPrefs.SetFloat("AccuracyBomb", PlayerPrefs.GetFloat("EnemyHitBomb") / PlayerPrefs.GetFloat("ShotsFiredBomb")*100);
+            HeadshotsValue.text = PlayerPrefs.GetFloat("HeadshotCountBomb").ToString();
+            TotalKills.text = PlayerPrefs.GetFloat("EnemiesKilledBomb").ToString();
+            AccuracyValue.text = PlayerPrefs.GetFloat("AccuracyBomb").ToString();
+            FlagsCollectedtoDisableInbombDefuse.SetActive(false);
+            TotalBombsDefusedVal.text = PlayerPrefs.GetInt("TotalBombs").ToString();
+        }
+        
+    }
     
-
-public IEnumerator VictoryPanel()
-{
-
-    yield return new WaitForSecondsRealtime(1f);
-    victoryEffect.SetActive(true);
-    SoundController.instance.audioMusic.enabled = false;
-    SoundController.instance.playFromPool(AudioType.LevelComplete);
-    yield return new WaitForSeconds(3f);
-    victoryEffect.SetActive(false);
-    RankUpSystem();
-
-
-
-#if !UNITY_EDITOR
-        if (PlayerPrefs.GetString("Mode") == "Flag")
-        {
-            Analyticsmanager.instance.LevelCompleteEvent("FML",currentLevel);
-        }
-        else if (PlayerPrefs.GetString("Mode") == "BombDiffuse")
-        {
-            Analyticsmanager.instance.LevelCompleteEvent("BML",currentLevel);
-        }
-        AdsController.Instance.Unity_InterstitialGame();
-#endif
-}
-
-///////////////////////////////// Level Fail
+    ///////////////////////////////// Level Fail
     
     public void GameFail()
     {
@@ -339,23 +436,33 @@ public IEnumerator VictoryPanel()
     {
         yield return new WaitForSeconds(0.2f);
         SoundController.instance.playFromPool(AudioType.LevelFail);
+        LevelsController.Instance.LastEnemyRemaining.SetActive(false);
+        LevelsController.Instance.lastEnemy = false;
         defeatEffect.SetActive(true);
         yield return new WaitForSeconds(3f);
         defeatEffect.SetActive(false);
         EnableReference(3);
         
-           #if !UNITY_EDITOR
-        if (PlayerPrefs.GetString("Mode") == "Flag")
-        {
-            Analyticsmanager.instance.LevelFailedEvent("FML",currentLevel);
-        }
-        else if (PlayerPrefs.GetString("Mode") == "BombDiffuse")
-        {
-            Analyticsmanager.instance.LevelFailedEvent("BML",currentLevel);
-        }
-        AdsController.Instance.Unity_InterstitialGame();
-          #endif
+// #if !UNITY_EDITOR
+
         Time.timeScale = 0;
+        if(Analyticsmanager.instance)
+        {
+            if (PlayerPrefs.GetString("Mode") == "Flag")
+            {
+                Analyticsmanager.instance.LevelFailedEvent("FML", currentLevel);
+            }
+            else if (PlayerPrefs.GetString("Mode") == "BombDiffuse")
+            {
+                Analyticsmanager.instance.LevelFailedEvent("BML", currentLevel);
+            }
+        }
+        
+        if(AdsController.Instance)
+        {
+            AdsController.Instance.Unity_InterstitialGame();
+        }
+// #endif
     }
 
     #endregion
@@ -374,7 +481,9 @@ public IEnumerator VictoryPanel()
             rankUpPanel.SetActive(true);
             rankUp.text = $"{rankUpValue}";
             RankUpdTags();
-            Invoke(nameof(RankUpDeactivate),3f);
+           //Invoke(nameof(RankUpDeactivate),2f);
+           StartCoroutine(RankUpDeactivate());
+           
         }
         else
         {
@@ -383,8 +492,9 @@ public IEnumerator VictoryPanel()
         }
     }
 
-    public void RankUpDeactivate()
+    public IEnumerator RankUpDeactivate()
     {
+        yield return new WaitForSeconds(2f);
         rankUpPanel.SetActive(false);
         EnableReference(2);
         Time.timeScale = 0;
@@ -416,3 +526,11 @@ public IEnumerator VictoryPanel()
     #endregion
     
 }
+/*var async = SceneManager.LoadSceneAsync(sceneIndex);
+       while (!async.isDone)
+       {
+           float progress = Mathf.Clamp01(async.progress / .9f);
+           // LoadingBar.fillAmount = progress;
+           // LoadingProgress.text = (progress * 100f).ToString("0") + "%";
+           yield return null;
+       }*/

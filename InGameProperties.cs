@@ -60,7 +60,9 @@ public class InGameProperties : MonoBehaviour
     public GameObject soundOn;
     public GameObject soundOff;
     public GameObject musicOn;
-    public GameObject musicOff;  
+    public GameObject musicOff;
+    public bool SFXOFF;
+    public bool SFXON;
 
     [Space(5)] 
     [Header("--- Scripts References")]
@@ -142,6 +144,8 @@ public class InGameProperties : MonoBehaviour
         musicOn.SetActive(true);
         musicOff.SetActive(false);
         SoundController.instance.musicVolumeChanged(1);
+        SFXON = true;
+        SFXOFF = false;
     }
     public void MusicVoluneOff() 
     {
@@ -149,6 +153,8 @@ public class InGameProperties : MonoBehaviour
         musicOn.SetActive(false);
         musicOff.SetActive(true);
         SoundController.instance.musicVolumeChanged(0);
+        SFXOFF=true;
+        SFXON = false;
     }
     
     public void SfxVolumeOn()
@@ -157,6 +163,10 @@ public class InGameProperties : MonoBehaviour
         soundOn.SetActive(true);
         soundOff.SetActive(false);
         SoundController.instance.sfxVolumeChanged(1);
+       
+       
+        Debug.Log(PlayerPrefs.GetInt("sfxvolume"));
+        LevelsController.Instance.bombDiffuseObject.GetComponent<AudioSource>().enabled = true;
     }
     
     public void SfxVolumeOff()
@@ -164,18 +174,26 @@ public class InGameProperties : MonoBehaviour
         PlayerPrefs.SetInt("sfxvolume",0);
         soundOn.SetActive(false);
         soundOff.SetActive(true);
+        
         SoundController.instance.sfxVolumeChanged(0);
+        SoundController.instance.musicVolumeChanged(0);
+        LevelsController.Instance.bombDiffuseObject.GetComponent<AudioSource>().enabled = false;
+        Debug.Log(PlayerPrefs.GetInt("sfxvolume"));
     } 
+    
+    
     
     public void ChangeSfxVolume()
     {
         if (PlayerPrefs.GetInt("sfxvolume")  == 0)
         {
             SfxVolumeOff();
+           
         }
         else
         {
             SfxVolumeOn();
+            
         }
             
     }

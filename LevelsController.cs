@@ -23,7 +23,7 @@ public class LevelsController : MonoBehaviour
     }
     
     #endregion
-    public GameObject[] enemyPrefab;
+  public GameObject[] enemyPrefab;
     public Enemy[] levelData;
     [HideInInspector]public int currentLevel;
     public int[] levelCash;
@@ -35,44 +35,41 @@ public class LevelsController : MonoBehaviour
     [HideInInspector]
     public bool allbombdefused = false;
 
-    public int LevelReward;
-    public int RewardIncrement;
-    public int TotalCash;
-    public int currentCashValue;
-    
+    public GameObject LastEnemyRemaining;
+    public bool lastEnemy;
     private void Start()
     {
         currentLevel = GameManager.Instance.currentLevel-1;
-        if (PlayerPrefs.GetString("Mode")=="Flag" || PlayerPrefs.GetString("Mode")=="BombDiffuse")
+        
+        
+        for (int i = 0; i <  levelData[currentLevel].enemiesType.Count; i++)
         {
-            for (int i = 0; i <  levelData[currentLevel].enemiesType.Count; i++)
-            {
-                GameObject g =Instantiate(enemyPrefab[CheckEnemyType(i)],levelData[currentLevel].enemiesPosition[i].transform.position,levelData[currentLevel].enemiesPosition[i].transform.rotation);
-                levelData[currentLevel].totalEnemies.Add(g.transform); 
-            }
-
-            for (int i = 0; i < levelData[currentLevel].enemiesWave; i++)
-            {
-                levelData[currentLevel].totalEnemies[i].gameObject.SetActive(true);
-            }
-
-            if (PlayerPrefs.GetString("Mode") == "BombDiffuse")
-            {
-                BombInstantiate();
-                
-            }
-
+            GameObject g =Instantiate(enemyPrefab[CheckEnemyType(i)],levelData[currentLevel].enemiesPosition[i].transform.position,levelData[currentLevel].enemiesPosition[i].transform.rotation);
+            levelData[currentLevel].totalEnemies.Add(g.transform); 
         }
+
+        for (int i = 0; i < levelData[currentLevel].enemiesWave; i++)
+        {
+            levelData[currentLevel].totalEnemies[i].gameObject.SetActive(true);
+        }
+
+        if (PlayerPrefs.GetString("Mode") == "BombDiffuse")
+        {
+            BombInstantiate();
+        }
+        
+        
     }
 
     public void BombInstantiate()
     {
         for (int i = 0; i < levelData[currentLevel].bombposition.Count; i++)
         {
-           GameObject bomb =  Instantiate(bombDiffuseObject,levelData[currentLevel].bombposition[i].transform.position,Quaternion.Euler(90,0,0));
+           GameObject bomb =  Instantiate(bombDiffuseObject,levelData[currentLevel].bombposition[i].transform.position, levelData[currentLevel].bombposition[i].transform.rotation);
            bomb.SetActive(true);
       
         }
+
     }
     
     private int defused = 0;
@@ -80,6 +77,8 @@ public class LevelsController : MonoBehaviour
     {
         defused++;
         GameManager.Instance.BombsDefused.text = defused.ToString();
+        PlayerPrefs.SetInt("TotalBombs",defused+PlayerPrefs.GetInt("TotalBombs"));
+        Debug.Log("TotalBombsDefused  " + PlayerPrefs.GetInt("TotalBombs"));
         if (levelData[currentLevel].bombposition.Count == defused)
         {
             allbombdefused = true;
@@ -94,17 +93,26 @@ public class LevelsController : MonoBehaviour
         {
             levelData[currentLevel].totalEnemies[0].gameObject.SetActive(true);
         }
+        if (levelData[currentLevel].totalEnemies.Count == 1)
+        {
+          LastEnemyRemaining.SetActive(true);
+          lastEnemy=true;
+        }
         else
         {
-            if (PlayerPrefs.GetString("Mode") == "Flag")
+            if (PlayerPrefs.GetString("Mode") == "Flag" && levelData[currentLevel].totalEnemies.Count == 0 )
             {
-                pausebutton.GetComponent<Button>().interactable = false;
+               
+                LastEnemyRemaining.SetActive(false);
+                lastEnemy = false;
+                //pausebutton.SetActive(false);
                 StartCoroutine(waitmethod(3.5f));
-                
             }
 
-            if (PlayerPrefs.GetString("Mode") == "BombDiffuse")
+            if (PlayerPrefs.GetString("Mode") == "BombDiffuse"  && levelData[currentLevel].totalEnemies.Count == 0)
             {
+                LastEnemyRemaining.SetActive(false);
+                lastEnemy = false;
                 StartCoroutine(slowmo());
                 allenemydead = true;     
                 bombdiffusecheck();
@@ -116,32 +124,34 @@ public class LevelsController : MonoBehaviour
 
     IEnumerator slowmo()
     {
-        Time.timeScale = .25f;
+        Time.timeScale = .20f;
         yield return new WaitForSecondsRealtime(1.5f);
         Time.timeScale = 1;  
         
     }
     IEnumerator waitmethod(float x)
     {
-        Time.timeScale = .25f;
+        Time.timeScale = .20f;
         yield return new WaitForSecondsRealtime(1.5f);
         Time.timeScale = 1;
         yield return new WaitForSecondsRealtime(x);
-        Controls.SetActive(false);
-        GameManager.Instance.GameComplete();
+        //Flag mode level will be completed when all flags have been collected. Check flagcollect.cs>FlagCollectionFunctionality
+       
+        
+       
     }
-
     
     
     
     public void bombdiffusecheck()
     {
 
-        if (allbombdefused && allenemydead )
+        if (allbombdefused && allenemydead)
         {
             Controls.SetActive(false);
             GameManager.Instance.GameComplete();
-            
+       
+
         }
         
 
@@ -169,14 +179,13 @@ public class LevelsController : MonoBehaviour
      [Space(5)]
      [Space(2)]public Transform playerSpwanPosition;
      [Space(2)]public int enemiesWave;
-
      [Space(2)]public List<EnemyType> enemiesType;
-     
      [Space(2)]public List<Transform> enemiesPosition;
      [Space(2)]public List<Transform> bombposition;
      [Space(2)]public List<Transform> totalEnemies;
-
      [Space(2)] public List<GameObject> bombDiffusePoint;
+     [Space(2)] public List<Transform> RespawnPosition;
+    
 
  }
  
@@ -185,11 +194,6 @@ public enum EnemyType
 {
     A,B
 }
-
-
-
-
-
 
 
 
