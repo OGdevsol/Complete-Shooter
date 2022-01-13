@@ -169,14 +169,10 @@ public class Weapon_Manager : MonoBehaviour
 		
 		CloseParent();
 		Setting.Instance.ClickAudio(1);
-
-// #if !UNITY_EDITOR
 		Analyticsmanager.instance.GunsTrackingMenu(currentWeapon);
 		AdsController.Instance.HideBanner();
-// #endif
 
 	}
-
 	public void CloseParent()
 	{
 		parentObject.SetActive(false);
@@ -185,7 +181,6 @@ public class Weapon_Manager : MonoBehaviour
 	{
 		parentObject.SetActive(true);
 	}
-	
 	public void PurchaseAllWeapons()
 	{
 		for (int i = 0; i < 3; i++) {
@@ -194,8 +189,5 @@ public class Weapon_Manager : MonoBehaviour
 		}
 		UpdateStatus();
 	}
-	
-	
-	
 }
 

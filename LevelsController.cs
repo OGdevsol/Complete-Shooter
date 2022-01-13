@@ -34,19 +34,53 @@ public class LevelsController : MonoBehaviour
     public bool allenemydead = false;
     [HideInInspector]
     public bool allbombdefused = false;
-
     public GameObject LastEnemyRemaining;
     public bool lastEnemy;
+    public bool deactivateCurrentWeapon;
     private void Start()
     {
+       
         currentLevel = GameManager.Instance.currentLevel-1;
-        
-        
-        for (int i = 0; i <  levelData[currentLevel].enemiesType.Count; i++)
+        if (PlayerPrefs.GetString("Mode")=="Flag" || PlayerPrefs.GetString("Mode") == "BombDiffuse" )
         {
-            GameObject g =Instantiate(enemyPrefab[CheckEnemyType(i)],levelData[currentLevel].enemiesPosition[i].transform.position,levelData[currentLevel].enemiesPosition[i].transform.rotation);
-            levelData[currentLevel].totalEnemies.Add(g.transform); 
+            for (int i = 0; i <  levelData[currentLevel].enemiesType.Count; i++)
+            {
+                if (PlayerPrefs.GetString("Mode")=="Flag")
+                {
+               
+                    GameObject g =Instantiate(enemyPrefab[CheckEnemyType(i)],levelData[currentLevel].enemiesPositionFlag[i].transform.position,levelData[currentLevel].enemiesPositionFlag[i].transform.rotation);
+                    levelData[currentLevel].totalEnemies.Add(g.transform);
+               
+                }
+                else if(PlayerPrefs.GetString("Mode")=="BombDiffuse")
+                {
+               
+                    GameObject g =Instantiate(enemyPrefab[CheckEnemyType(i)],levelData[currentLevel].enemiesPositionBomb[i].transform.position,levelData[currentLevel].enemiesPositionBomb[i].transform.rotation);
+                    levelData[currentLevel].totalEnemies.Add(g.transform); 
+                }
+            
+            }
+            
         }
+        else if (PlayerPrefs.GetString("Mode")=="BombPlant")
+        {
+            for (int i = 0; i <  levelData[currentLevel].enemiesTypeBombPlant.Count; i++)
+            {
+                GameObject g =Instantiate(enemyPrefab[CheckEnemyType(i)],levelData[currentLevel].enemiesPositionBombPlant[i].transform.position,levelData[currentLevel].enemiesPositionBombPlant[i].transform.rotation);
+                levelData[currentLevel].totalEnemies.Add(g.transform);
+            
+            }
+        }
+        /*for (int i = 0; i <  levelData[currentLevel].enemiesTypeHostageRescue.Count; i++)
+        {
+            if (PlayerPrefs.GetString("Mode")=="HostageRescue")
+            {
+               
+                GameObject g =Instantiate(enemyPrefab[CheckEnemyType(i)],levelData[currentLevel].enemiesPositionHostageRescue[i].transform.position,levelData[currentLevel].enemiesPositionHostageRescue[i].transform.rotation);
+                levelData[currentLevel].totalEnemies.Add(g.transform);
+               
+            }
+        }*/
 
         for (int i = 0; i < levelData[currentLevel].enemiesWave; i++)
         {
@@ -57,8 +91,6 @@ public class LevelsController : MonoBehaviour
         {
             BombInstantiate();
         }
-        
-        
     }
 
     public void BombInstantiate()
@@ -70,6 +102,19 @@ public class LevelsController : MonoBehaviour
       
         }
 
+    }
+
+    public void BombPlantInstantiate()
+    {
+        deactivateCurrentWeapon = true;
+        for (int i = 0; i < levelData[currentLevel].BombPlantPosition.Count; i++)
+        {
+            GameObject b = Instantiate(GameManager.Instance.bombPlantPositionIndicator,
+                levelData[currentLevel].BombPlantPosition[i].transform.position,
+                levelData[currentLevel].BombPlantPosition[i].transform.rotation);
+                b.SetActive(true);
+        }
+        PlayerPrefs.SetInt("BombCountForLevel", levelData[currentLevel].bombPlantQuantity.Length);
     }
     
     private int defused = 0;
@@ -89,7 +134,7 @@ public class LevelsController : MonoBehaviour
     
     public void NextEnemy()
     {
-        if (levelData[currentLevel].totalEnemies.Count > 0)
+        if (levelData[currentLevel].totalEnemies.Count < 0)
         {
             levelData[currentLevel].totalEnemies[0].gameObject.SetActive(true);
         }
@@ -105,11 +150,10 @@ public class LevelsController : MonoBehaviour
                
                 LastEnemyRemaining.SetActive(false);
                 lastEnemy = false;
-                //pausebutton.SetActive(false);
                 StartCoroutine(waitmethod(3.5f));
             }
 
-            if (PlayerPrefs.GetString("Mode") == "BombDiffuse"  && levelData[currentLevel].totalEnemies.Count == 0)
+            else if (PlayerPrefs.GetString("Mode") == "BombDiffuse"  && levelData[currentLevel].totalEnemies.Count == 0)
             {
                 LastEnemyRemaining.SetActive(false);
                 lastEnemy = false;
@@ -117,6 +161,15 @@ public class LevelsController : MonoBehaviour
                 allenemydead = true;     
                 bombdiffusecheck();
                 
+            }
+            else if (PlayerPrefs.GetString("Mode") == "BombPlant"  && levelData[currentLevel].totalEnemies.Count == 0)
+            {
+                BombPlantInstantiate();
+                LastEnemyRemaining.SetActive(false);
+                lastEnemy = false;
+                StartCoroutine(slowmo());
+                allenemydead = true;
+                GameManager.Instance.activateBombPlantHands();
             }
         }
 
@@ -136,13 +189,7 @@ public class LevelsController : MonoBehaviour
         Time.timeScale = 1;
         yield return new WaitForSecondsRealtime(x);
         //Flag mode level will be completed when all flags have been collected. Check flagcollect.cs>FlagCollectionFunctionality
-       
-        
-       
     }
-    
-    
-    
     public void bombdiffusecheck()
     {
 
@@ -150,26 +197,47 @@ public class LevelsController : MonoBehaviour
         {
             Controls.SetActive(false);
             GameManager.Instance.GameComplete();
-       
-
+            
         }
-        
-
     }
     private int x;
     private int CheckEnemyType(int i )
     {
-        if (levelData[currentLevel].enemiesType[i] == EnemyType.A)
+        if (PlayerPrefs.GetString("Mode")=="Flag" || PlayerPrefs.GetString("Mode")=="BombDiffuse")
         {
+            if (levelData[currentLevel].enemiesType[i] == EnemyType.A || levelData[currentLevel].enemiesTypeBombPlant[i]==EnemyType.A)
+            {
                 x= 0;
                 return x;
-        }
-        if (levelData[currentLevel].enemiesType[i] == EnemyType.B)
-        {
+                
+            }
+            if (levelData[currentLevel].enemiesType[i] == EnemyType.B || levelData[currentLevel].enemiesTypeBombPlant[i]==EnemyType.B)
+            {
                 x= 1;
                 return x;
+            }
+        }
+        else if (PlayerPrefs.GetString("Mode")=="BombPlant" || PlayerPrefs.GetString("Mode")=="HostageRescue")
+        {
+            if (levelData[currentLevel].enemiesTypeBombPlant[i]==EnemyType.A)
+            {
+                x= 0;
+                return x;
+                
+            }
+            if (levelData[currentLevel].enemiesTypeBombPlant[i]==EnemyType.B)
+            {
+                x= 1;
+                return x;
+            }
+            
         }
         return x;
+        
+        
+        
+        
+        
     }
 }
 
@@ -180,7 +248,14 @@ public class LevelsController : MonoBehaviour
      [Space(2)]public Transform playerSpwanPosition;
      [Space(2)]public int enemiesWave;
      [Space(2)]public List<EnemyType> enemiesType;
-     [Space(2)]public List<Transform> enemiesPosition;
+     [Space(2)]public List<EnemyType> enemiesTypeBombPlant;
+     [Space(2)]public List<Transform> enemiesPositionBombPlant;
+     [Space(2)]public List<Transform> BombPlantPosition;
+     public int [] bombPlantQuantity;
+     [Space(2)]public List<EnemyType> enemiesTypeHostageRescue;
+     [Space(2)]public List<Transform> enemiesPositionFlag;
+     [Space(2)]public List<Transform> enemiesPositionBomb;
+     [Space(2)]public List<Transform> enemiesPositionHostageRescue;
      [Space(2)]public List<Transform> bombposition;
      [Space(2)]public List<Transform> totalEnemies;
      [Space(2)] public List<GameObject> bombDiffusePoint;
@@ -188,6 +263,9 @@ public class LevelsController : MonoBehaviour
     
 
  }
+
+
+
  
 [Serializable]
 public enum EnemyType

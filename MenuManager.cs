@@ -43,6 +43,12 @@ public class MenuManager : MonoBehaviour
     [Space(5)] [Header("--- Levels Bomb-Diffuse")] [Space(3)]
     public GameObject[] bombLevelsBtn;
 
+    [Space(5)] [Header("--- Levels BombPlant")] [Space(3)]
+    public GameObject[] bombPlantLevelsBtn;
+
+    [Space(5)] [Header("--- Levels HostageRescue")] [Space(3)]
+    public GameObject[] hostageRescueLevelsBtn;
+
     public GameObject[] checkMark;
     
     private int index;
@@ -118,13 +124,6 @@ public class MenuManager : MonoBehaviour
             selectWeaponText.text = "Next";
             isWeaponClick = false;
         }
-
-        /*foreach (var item in reference)
-        {
-            item.SetActive(false);
-        }
-        reference[x].SetActive(true);*/
-
         for (int i = 0; i < reference.Length; i++)
         {
             reference[i].SetActive(false);
@@ -154,6 +153,14 @@ public class MenuManager : MonoBehaviour
             {
                 EnablePanel(7);
             }
+            else if (PlayerPrefs.GetString("Mode") == "BombPlant")
+            {
+                EnablePanel(8);
+            }
+            else if (PlayerPrefs.GetString("Mode") == "HostageRescue")
+            {
+                EnablePanel(9);
+            }
         }
     }
 
@@ -174,13 +181,6 @@ public class MenuManager : MonoBehaviour
     {
         EnablePanel(5);
         yield return new WaitForSeconds(2f);
-        /*async = SceneManager.LoadSceneAsync(sceneIndex);
-        while (!async.isDone)
-        {
-            float progress = Mathf.Clamp01(async.progress / .9f);
-            loadingProgress.text = (progress * 100f).ToString("0") + "%";
-            yield return null;
-        }*/
         SceneManager.LoadScene(sceneIndex);
     }
 
@@ -219,8 +219,8 @@ public class MenuManager : MonoBehaviour
 
        
         flagLevelsBtn[PlayerPrefs.GetInt("SelectedFlagLevel")].transform.GetChild(0).gameObject.SetActive(true);
-            flagLevelsBtn[PlayerPrefs.GetInt("SelectedFlagLevel")].transform.GetChild(1).gameObject.SetActive(true);
-            flagLevelsBtn[PlayerPrefs.GetInt("SelectedFlagLevel")].GetComponent<Button>().interactable = true;
+        flagLevelsBtn[PlayerPrefs.GetInt("SelectedFlagLevel")].transform.GetChild(1).gameObject.SetActive(true); 
+        flagLevelsBtn[PlayerPrefs.GetInt("SelectedFlagLevel")].GetComponent<Button>().interactable = true;
 //      
 //        
         
@@ -230,16 +230,12 @@ public class MenuManager : MonoBehaviour
     
     public void FlagCollection()
     {
-        
-            PlayerPrefs.SetInt("FlagLevel", PlayerPrefs.GetInt("SelectedFlagLevel")+1);
+        PlayerPrefs.SetInt("FlagLevel", PlayerPrefs.GetInt("SelectedFlagLevel")+1);
             EnablePanel(2);
             weaponManager.OpenParent();
             weaponManager.CustomSelect(PlayerPrefs.GetInt("Weapon"));
             isWeaponClick = false;
             Analyticsmanager.instance.CustomEvent("Flag");
-        
-       
-       
     }    
     
         
@@ -252,7 +248,6 @@ public class MenuManager : MonoBehaviour
             PlayerPrefs.SetInt("UnlockFlag", 30);
         }
         PlayerPrefs.SetString("FlagLevelPurchased", "Done");
-
     }
         
     #endregion
@@ -287,11 +282,8 @@ public class MenuManager : MonoBehaviour
         
         bombLevelsBtn[PlayerPrefs.GetInt("SelectedBombLevel")].transform.GetChild(0).gameObject.SetActive(true);
         bombLevelsBtn[PlayerPrefs.GetInt("SelectedBombLevel")].transform.GetChild(1).gameObject.SetActive(true);
-        bombLevelsBtn[PlayerPrefs.GetInt("SelectedBombLevel")].GetComponent<Button>().interactable = true; 
-//     
-
+        bombLevelsBtn[PlayerPrefs.GetInt("SelectedBombLevel")].GetComponent<Button>().interactable = true;
     }
-    
     public void BombDiffuse()
     {
         PlayerPrefs.SetInt("BombLevel", PlayerPrefs.GetInt("SelectedBombLevel")+1);
@@ -300,8 +292,6 @@ public class MenuManager : MonoBehaviour
         weaponManager.CustomSelect(PlayerPrefs.GetInt("Weapon"));
         Analyticsmanager.instance.CustomEvent("BombDiffuse");
     }
-    
-    
     public void BuyBombLevels()
     {
         for (int y = 0; y < 30; y++)
@@ -311,9 +301,30 @@ public class MenuManager : MonoBehaviour
             PlayerPrefs.SetInt("UnlockBomb", 30);
         }
         PlayerPrefs.SetString("BombLevelPurchased", "Done");
-
     }
         
+    #endregion
+
+    #region BombPlantModeLevels
+
+    public void LevelIndexBombPlant(int z)
+    {
+        PlayerPrefs.SetInt("BombPlantLevel", z);
+        EnablePanel(2);
+        weaponManager.CustomSelect(PlayerPrefs.GetInt("Weapon"));
+    }
+
+    #endregion
+
+    #region HostageRescueModeLevels
+
+    public void LevelIndexHostageRescue(int z)
+    {
+        PlayerPrefs.SetInt("HostageRescueLevel", z);
+        EnablePanel(2);
+        weaponManager.CustomSelect(PlayerPrefs.GetInt("Weapon"));
+    }
+
     #endregion
     
     #region Mode Selection
@@ -323,7 +334,6 @@ public class MenuManager : MonoBehaviour
         EnablePanel(2);
         weaponManager.OpenParent();
         weaponManager.CustomSelect(PlayerPrefs.GetInt("Weapon"));
-//        LevelIndexFlag(PlayerPrefs.GetInt("FlagLevel", 1));
         weaponManager.CustomSelect(PlayerPrefs.GetInt("Weapon"));
     }
 
@@ -354,12 +364,6 @@ public class MenuManager : MonoBehaviour
     
     private void CurrentSelectedMode(int clicked)
     {
-        /*foreach (GameObject item in checkMark)
-        {
-            item.SetActive(false);
-        }
-        checkMark[clicked].SetActive(true);*/
-
         for (int i = 0; i < checkMark.Length; i++)
         {
             checkMark[i].SetActive(false);
@@ -388,6 +392,17 @@ public class MenuManager : MonoBehaviour
             {
                 CurrentSelectedMode(1);
                 Debug.Log("BombDiffuse");
+            }
+            else if(PlayerPrefs.GetString("Mode")=="BombPlant")
+            {
+                CurrentSelectedMode(2);
+                Debug.Log("BombPlant");
+            }
+            else if(PlayerPrefs.GetString("Mode")=="HostageRescue")
+            {
+                CurrentSelectedMode(3);
+                Debug.Log("HostageRescue");
+                
             }
         }
     }
@@ -422,8 +437,18 @@ public class MenuManager : MonoBehaviour
     {
         PlayerPrefs.SetString("APILevel27","Done");
     }
+    
+    
   
 }
 
+
+/*async = SceneManager.LoadSceneAsync(sceneIndex);
+        while (!async.isDone)
+        {
+            float progress = Mathf.Clamp01(async.progress / .9f);
+            loadingProgress.text = (progress * 100f).ToString("0") + "%";
+            yield return null;
+        }*/
 
 

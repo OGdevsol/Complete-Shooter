@@ -60,19 +60,13 @@ public class BombDiffuse : MonoBehaviour
             GameManager.Instance.bombSliderValue.text = $"BOMB DEFUSED SUCCESSFULLY";
             isDiffuse = false;
             LevelsController.Instance.checkallbombs();
-            //GameManager.Instance.GameComplete();
             gameObject.GetComponent<BoxCollider>().enabled = false;
             gameObject.GetComponent<AudioSource>().enabled = false;
             gameObject.transform.GetChild(0).gameObject.SetActive(false);
             yield return new WaitForSecondsRealtime(1f);
             GameManager.Instance.bombDiffuseBar.SetActive(false);
             this.gameObject.GetComponent<MapMarker>().isActive = false;
-            
-           
         }
-        
-        
-        
         if (isDiffuse)
         {
             yield return new WaitForSeconds(0.01f);
