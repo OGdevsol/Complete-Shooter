@@ -23,14 +23,15 @@ public class flagcollect : MonoBehaviour
             GameManager.Instance.flagcollectcounter += 1;
             PlayerPrefs.SetInt("TotalFlags", PlayerPrefs.GetInt("TotalFlags")+1);
             GameManager.Instance.flagscollectedtext.text = GameManager.Instance.flagcollectcounter.ToString();
-            FlagCollectionFunctionality();
+           // FlagCollectionFunctionality();
         }
     }
 
     public void FlagCollectionFunctionality()
     {
-        if (GameManager.Instance.flagcollectcounter==LevelsController.Instance.levelData[LevelsController.Instance.currentLevel].enemiesType.Count)
+        if (LevelsController.Instance.levelData[LevelsController.Instance.currentLevel].enemiesType.Count==0 && LevelsController.Instance.levelData[LevelsController.Instance.currentLevel].EnemiesOnHold.Count==0 )
         {
+            Debug.Log("Check Called");
             GameManager.Instance.GameComplete();
         }
     }

@@ -5,9 +5,17 @@ using UnityEngine;
 
 public class BombDiffuse : MonoBehaviour
 {
+    public static BombDiffuse instance;
     
     private int currentValue;
-    private bool isDiffuse;
+   public bool isDiffuse;
+    public bool IsInRange;
+    public AudioSource timer;
+
+    private void Awake()
+    {
+        instance = this;
+    }
 
     private void OnTriggerEnter(Collider other)
     {
@@ -16,7 +24,6 @@ public class BombDiffuse : MonoBehaviour
             GameManager.Instance.bombDiffuseBar.SetActive(true);
             isDiffuse = true;
             StartCoroutine(BombDiffuseTime());
-            
         }
         
 
@@ -28,6 +35,8 @@ public class BombDiffuse : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+            IsInRange = false;
+            timer.enabled = false;
             currentValue = 0;
             isDiffuse = false;
             GameManager.Instance.bombSliderValue.text = "{0}%";
@@ -41,22 +50,30 @@ public class BombDiffuse : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+            IsInRange = true;
             if (PlayerPrefs.GetInt("sfxvolume") == 0)
             {
-                gameObject.GetComponent<AudioSource>().enabled = false;
+               timer.enabled = false;
+                
+               
             }
-            else if (PlayerPrefs.GetInt("sfxvolume") == 1)
+            else if (PlayerPrefs.GetInt("sfxvolume") == 1 && IsInRange)
             {
-                gameObject.GetComponent<AudioSource>().enabled = true;
+                timer.enabled = true;
+                
             }
         }
     }
+    
+   
+
 
 
     private IEnumerator BombDiffuseTime()
     {
         if (currentValue >= 100)
         {
+            
             GameManager.Instance.bombSliderValue.text = $"BOMB DEFUSED SUCCESSFULLY";
             isDiffuse = false;
             LevelsController.Instance.checkallbombs();
@@ -76,7 +93,10 @@ public class BombDiffuse : MonoBehaviour
             
             if (currentValue <= 100 && isDiffuse)
             {
-                StartCoroutine(BombDiffuseTime());
+               
+                    StartCoroutine(BombDiffuseTime());
+                
+               
             }
         }
     }

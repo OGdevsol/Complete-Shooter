@@ -127,6 +127,8 @@ public class InGameProperties : MonoBehaviour
         
         autoShootOn.SetActive(false);
         autoShootOff.SetActive(true);
+        hitMarker.SetActive(false);
+        
         
     }
     public void AutoShoot_Off()
@@ -135,7 +137,8 @@ public class InGameProperties : MonoBehaviour
         PlayerPrefs.SetInt("AutoShoot",1);
         autoShootOn.SetActive(true);
         autoShootOff.SetActive(false);
-        
+        hitMarker.SetActive(true);
+       
     }
     
     public void MusicVoluneOn()
@@ -163,9 +166,10 @@ public class InGameProperties : MonoBehaviour
         soundOn.SetActive(true);
         soundOff.SetActive(false);
         SoundController.instance.sfxVolumeChanged(1);
+        
        
        
-        Debug.Log(PlayerPrefs.GetInt("sfxvolume"));
+       
         LevelsController.Instance.bombDiffuseObject.GetComponent<AudioSource>().enabled = true;
     }
     
